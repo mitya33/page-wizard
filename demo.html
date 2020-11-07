@@ -1,0 +1,30 @@
+<!doctype html>
+<head>
+	<link rel=stylesheet href=//cdn.jsdelivr.net/gh/mitya33/lightbox-lib@1/lightbox-lib.min.css>
+	<style>
+	#foo, #bar, .mult { display: inline-block; width: 300px; height: 300px; background: blue; margin: 2rem; }
+	#bar { background: red; }
+	.mult { background: orange; }
+	</style>
+</head>
+<body>
+	<div id=foo></div>
+	<div id=bar></div>
+	<br>
+	<div class=mult></div>
+	<div class=mult></div>
+	<div class=mult></div>
+	<div class=mult></div>
+	<script src='//cdn.jsdelivr.net/gh/mitya33/lightbox-lib@1.0.2/lightbox-lib.min.js'></script>
+	<script type=module>
+	import pw from './page-wizard.js';
+	pw({
+		dataFileUri: 'wizard.json',
+		cssFileUri: 'page-wizard.css',
+		prompt: 'Go ahead?',
+		onEndMessage: 'Great!',
+		watchAgain: 1,
+		onEndCallback: () => console.log('Finished wizard!')
+	});
+	</script>
+</body>

@@ -1,0 +1,22 @@
+[
+	{
+		"selector": "#foo",
+		"title": "Red square!",
+		"text": "Not the one in Moscow - just the one in this page."
+	},
+	{
+		"selector": "#bar",
+		"title": "Blue square!",
+		"text": "This is totally different from the red square; this one's blue."
+	},
+	{
+		"selector": "#doesnt-exist",
+		"title": "Doesn't exist",
+		"text": "This entry will be skipped as no elements match the @selector."
+	},
+	{
+		"selector": ".mult",
+		"title": "Multiple elements!",
+		"text": "We can even highlight multiple elements - in this case, these lovely orange squares."
+	}
+]

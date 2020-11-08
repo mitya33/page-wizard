@@ -2,12 +2,12 @@
 	{
 		"selector": "#foo",
 		"title": "Red square!",
-		"text": "Not the one in Moscow - just the one in this page."
+		"text": "Not the one in Moscow. Page Wizard will position itself to the right of this element, as that's where there's most space."
 	},
 	{
 		"selector": "#bar",
 		"title": "Blue square!",
-		"text": "This is totally different from the red square; this one's blue."
+		"text": "This is totally different from the red square; this one's blue. PW will position itself on the left of this element."
 	},
 	{
 		"selector": "#doesnt-exist",
@@ -15,8 +15,18 @@
 		"text": "This entry will be skipped as no elements match the @selector."
 	},
 	{
+		"selector": "#etc",
+		"title": "Green bar!",
+		"text": "This is a nice green bar. Since it spans the whole page, PW will position itself beneath it."
+	},
+	{
+		"selector": "#etc2",
+		"title": "Green bar 2!",
+		"text": "Another nice green rectangle. Since this one is at the bottom of the page, PW will position itself above it."
+	},
+	{
 		"selector": ".mult",
-		"title": "Multiple elements!",
-		"text": "We can even highlight multiple elements - in this case, these lovely orange squares."
+		"title": "Orange square!",
+		"text": "There's multiple elements matching the selector (.mult) here, so PW will use the first of them."
 	}
 ]

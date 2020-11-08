@@ -7,13 +7,15 @@ export default async function pageWizard(params) {
 	--- */
 
 	const appName = 'Page Wizard';
+	const bod = document.body;
+	const floatBuffer = 20;
 
 	//checks
 	if (!params.data && !params.dataFileUri) return console.error(appName+' error - one of @data or @dataFileUri params must be passed');
 	if (!params.cssFileUri) return console.error(appName+' error - @cssFileUri param not set');
-	if (params.minWidth && parseInt(params.minWidth) && document.body.offsetWidth < params.minWidth) return console.log(appName+' - quit because screen width too small');
-	if (params.effect && !['slide', 'fade'].includes(params.effect)) return console.log(appName+' error - @effect value "'+params.effect+'" is invalid');
-	if (!params.effect) params.effect = 'slide';
+	if (params.minWidth && parseInt(params.minWidth) && bod.offsetWidth < params.minWidth) return console.log(appName+' - quit because screen width too small');
+	if (params.mode && !['floor', 'float'].includes(params.mode)) return console.log(appName+' error - @mode value "'+params.mode+'" is invalid');
+	if (!params.mode) params.mode = 'float';
 
 	//prompt?
 	params.prompt && await new Promise(res => {
@@ -32,15 +34,15 @@ export default async function pageWizard(params) {
 	//dark overlay
 	let darkScreen = document.createElement('div');
 	darkScreen.id = 'pwz-ds';
-	document.body.appendChild(darkScreen);
+	bod.appendChild(darkScreen);
 
-	//info area (footer)
+	//info area
 	let infoArea = document.createElement('aside');
 	infoArea.id = 'pwz-ia';
 	infoArea.style.display = 'none';
 	if (!params.singular) infoArea.innerHTML = '<a class="but pwz-disabled">&laquo;</a>';
-	infoArea.innerHTML += '<h3></h3><p></p><a class="but">'+(!params.singular ? '&raquo;' : 'Got it')+'</a>';
-	document.body.appendChild(infoArea);
+	infoArea.innerHTML += '<h3></h3><p></p><a class="but">'+(!params.singular ? '&raquo;' : params.gotItBtn || 'Got it!')+'</a>';
+	bod.appendChild(infoArea);
 
 	//nav
 	infoArea.addEventListener('click', evt => {
@@ -84,7 +86,7 @@ export default async function pageWizard(params) {
 		if (!data[index] || (dir == '>' && params.singular)) {
 
 			//...clean up
-			document.body.classList.remove('pwz-wizard-mode');
+			bod.classList.remove('pwz-active', 'pwz-mode-floor', 'pwz-mode-float', 'pwz-singular');
 			infoArea.remove();
 			darkScreen.remove();
 
@@ -119,26 +121,71 @@ export default async function pageWizard(params) {
 			}
 			return;
 
-		//...not reached end - put window in wizard mode (timeout ensures CSS transition)
-		} else
-			setTimeout(() => document.body.classList.add('pwz-wizard-mode'), 1);
+		}
+
+		//beyond here, not reached end yet
+
+		//put window in wizard mode (timeout ensures CSS transition)
+		setTimeout(() => bod.classList.add('pwz-active', 'pwz-mode-'+params.mode, 'pwz-singular-'+!!params.singular), 1);
 
 		//highlight element and unhighlight previous, if there was one
-		let hl = document.querySelectorAll('.highlighted');
+		let hl = document.querySelectorAll('.pwz-highlighted');
 		hl.length && hl.forEach(el => el.classList.remove('pwz-highlighted'));
-		let els = document.querySelectorAll(data[next_feature_index].selector);
-		els.length && els.forEach(el => el.classList.add('pwz-highlighted'));
+		let el = document.querySelector(data[next_feature_index].selector);
+		el && el.classList.add('pwz-highlighted');
 
-		//no el(s) found? Skip to next/prev item
-		if (!els.length) highlight(dir == '>' ? next_feature_index++ : next_feature_index--);
+		//no el(s) found or hidden? Skip to next/prev item
+		if (!el || getComputedStyle(el).display == 'none' || getComputedStyle(el).visibility == 'hidden')
+			return highlight(dir == '>' ? next_feature_index++ : next_feature_index--);
 
-		//if element is position fixed and anchored bottom, will be hidden behind info area; temporarily bring it up
-		els.forEach(el => {
+		//float mode?...
+		delete infoArea.dataset.pos;
+		if (params.mode == 'float') {
+
+			//...position info area wherever there's most space around the target element
+			let edges = ['top', 'right', 'bottom', 'left'],
+				space = edges.reduce((acc, edge) => {
+				switch (edge[0]) {
+					case 't':
+					case 'l':
+						acc[edge] = el['offset'+(edge[0] == 't' ? 'Top' : 'Left')];
+						return acc;
+					case 'r':
+					case 'b':
+						let prop = edge[0] == 'r' ? 'Width' : 'Height';
+						acc[edge] = window['inner'+prop] - (el['offset'+(edge[0] == 'r' ? 'Left' : 'Top')] + el['offset'+prop]);
+						return acc;
+				}
+			}, {});
+			let side = Object.keys(space)[Object.values(space).indexOf(Math.max.apply(null, Object.values(space)))];
+			infoArea.dataset.pos = side;
+			edges.forEach(edge => el.style[edge] = 'auto');
+			switch (side[0]) {
+				case 't':
+				case 'b':
+					infoArea.style.left = el.offsetLeft + (el.offsetWidth / 2) - (infoArea.offsetWidth / 2)+'px';
+					infoArea.style.top = (side[0] == 't' ? space.top - (infoArea.offsetHeight + floatBuffer) : innerHeight - (space.bottom - floatBuffer))+'px';
+					break;
+				case 'l':
+				case 'r':
+					infoArea.style.left = (side[0] == 'l' ? space.left - (infoArea.offsetWidth + floatBuffer) : innerWidth - (space.right - floatBuffer))+'px';
+					infoArea.style.top = el.offsetTop+'px';
+					break;
+			}
+
+			//...scroll info area into view - not sure why the timeout is needed; without it, sometimes the scroll position ends up wrong
+			setTimeout(() => infoArea.scrollIntoView(side == 'top'), 1);
+
+		//floor mode?...
+		} else {
+
+			//...scroll target element into view
+			el.scrollIntoView();
+
+			//if element is position fixed and anchored bottom, will be hidden behind info area; temporarily bring it up
 			if (getComputedStyle(el).position == 'fixed' && getComputedStyle(el).bottom == '0px') el.style.bottom = infoArea.offsetHeight+'px';
-		});
 
-		//scroll to element - can't seem to do this with fancy scroll as element doesn't go to top of page
-		location.href = '#'+data[next_feature_index].selector;
+		}
 
 		//write explanatory content
 		infoArea.querySelector('h3').textContent = data[next_feature_index].title;

@@ -6,15 +6,20 @@ export default async function pageWizard(params) {
 	| PREP
 	--- */
 
-	const appName = 'Page Wizard';
-	const bod = document.body;
-	const floatBuffer = 20;
+	const appName = 'Page Wizard',
+		bod = document.body,
+		docEl = document.documentElement,
+		floatBuffer = 20,
+		rand = Math.random(),
+		startScrollTop = docEl.scrollTop,
+		sivOpts = {behavior: 'smooth'};
 
 	//checks
 	if (!params.data && !params.dataFileUri) return console.error(appName+' error - one of @data or @dataFileUri params must be passed');
 	if (!params.cssFileUri) return console.error(appName+' error - @cssFileUri param not set');
 	if (params.minWidth && parseInt(params.minWidth) && bod.offsetWidth < params.minWidth) return console.log(appName+' - quit because screen width too small');
-	if (params.mode && !['floor', 'float'].includes(params.mode)) return console.log(appName+' error - @mode value "'+params.mode+'" is invalid');
+	if (params.mode && !['floor', 'float'].includes(params.mode)) return console.error(appName+' error - @mode value "'+params.mode+'" is invalid');
+	if (params.onEndReturnTo && !['top', 'orig'].includes(params.onEndReturnTo)) return console.error(appName+' error - @onEndReturnTo value "'+params.onEndReturnTo+'" is invalid');
 	if (!params.mode) params.mode = 'float';
 
 	//prompt?
@@ -58,7 +63,7 @@ export default async function pageWizard(params) {
 
 	//css
 	if (!pageWizard.hasRun) {
-		let css = await fetch(params.cssFileUri).then(r => r.text());
+		let css = await fetch(params.cssFileUri+'?r='+rand).then(r => r.text());
 		let style = document.createElement('style');
 		style.textContent = css;
 		style.id = 'page-wizard-css';
@@ -67,7 +72,7 @@ export default async function pageWizard(params) {
 	
 	//data
 	pageWizard.dataCache = pageWizard.dataCache || {};
-	let data = params.data || pageWizard.dataCache[params.dataFileUri] || await fetch(params.dataFileUri).then(r => r.json());
+	let data = params.data || pageWizard.dataCache[params.dataFileUri] || await fetch(params.dataFileUri+'?r='+rand).then(r => r.json());
 	if (params.dataFileUri) pageWizard.dataCache[params.dataFileUri] = data;
 
 	//show specific, singular slide?
@@ -90,8 +95,10 @@ export default async function pageWizard(params) {
 			infoArea.remove();
 			darkScreen.remove();
 
-			//...go back to top, if hash element provided
-			if (params.onEndHash) location.hash = params.onEndHash.replace(/^#/, '');
+			//...go to top, or to original scrolltop point, if requested
+			if (params.onEndReturnTo)
+				if (params.onEndReturnTo == 'top') docEl.scrollIntoView(sivOpts);
+				else docEl.scrollTop = startScrollTop;
 
 			//...on end callback?
 			params.onEndCallback && params.onEndCallback();
@@ -174,7 +181,7 @@ export default async function pageWizard(params) {
 			}
 
 			//...scroll info area into view - not sure why the timeout is needed; without it, sometimes the scroll position ends up wrong
-			setTimeout(() => infoArea.scrollIntoView(side == 'top'), 1);
+			setTimeout(() => infoArea.scrollIntoView({...sivOpts, block: 'center'}), 1);
 
 		//floor mode?...
 		} else {

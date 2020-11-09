@@ -16,7 +16,7 @@ body:not(.pwz-singular-true) #pwz-ia > a { font-size: 1.5rem; }
 #pwz-ia > a:last-of-type { right: 1.7rem; left: auto; }
 
 /* info area - float mode */
-.pwz-mode-float #pwz-ia { width: 300px; position: absolute; height: 300px; padding: 1rem; }
+.pwz-mode-float #pwz-ia { width: 300px; position: absolute; padding: 1rem 1rem 5rem 1rem; }
 .pwz-mode-float #pwz-ia::before { content: ''; width: 20px; height: 20px; transform: rotate(45deg); background: inherit; position: absolute; display: block; }
 #pwz-ia[data-pos=top]::before { left: calc(50% - 10px); bottom: -10px; }
 #pwz-ia[data-pos=right]::before { left: -10px; top: calc(50% - 10px); }

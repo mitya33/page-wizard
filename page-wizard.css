@@ -1,5 +1,5 @@
 /* dark screen */
-#pwz-ds { background: #444; position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: none; opacity: .85; z-index: 10000; }
+#pwz-ds { background: #5a5a5a; position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: none; opacity: .85; z-index: 10000; }
 
 /* info area - general/floor mode */
 #pwz-ia { display: block !important; background: #333; opacity: 0; transition: opacity .8s; z-index: 10001; box-sizing: border-box; }
@@ -28,6 +28,10 @@ body:not(.pwz-singular-true) #pwz-ia > a { font-size: 1.5rem; }
 /* show both on start wizard */
 .pwz-active #pwz-ds { display: block; }
 .pwz-active #pwz-ia { opacity: 1; }
+
+/* while active, blur unfocused content */
+.pwz-active * { filter: blur(4px); }
+.pwz-highlighted, .pwz-highlighted *, #pwz-ia, #pwz-ia * { filter: none; }
 
 /* highlighted feature */
 .pwz-active .pwz-highlighted { z-index: 10001 !important; }

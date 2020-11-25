@@ -147,7 +147,7 @@ window.pageWizard = async params => {
 		//clone element and children/descendants - remove id, class and data attributes - we'll clamp in place all computed styling, so they're not needed
 		let clone = el.cloneNode(1);
 		clone.removeAttribute('id');
-		el.id && clone.setAttribute('data-orig-id', el.id);
+		el.id && clone.classList.add('pwz-id-'+el.id);
 		clone.style.position = 'absolute';
 		clone.style.left = el.offsetLeft+'px';
 		clone.style.top = el.offsetTop+'px';

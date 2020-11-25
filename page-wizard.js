@@ -1,6 +1,6 @@
 'use strict';
 
-export default async function pageWizard(params) {
+window.pageWizard = async params => {
 
 	/* ---
 	| PREP
@@ -87,6 +87,10 @@ export default async function pageWizard(params) {
 
 	function highlight(index, dir) {
 
+		//unhighlight last-highlighted element, if there was one
+		let hl = document.querySelector('.pwz-highlighted');
+		hl && hl.remove();
+
 		//reached end...
 		if (!data[index] || (dir == '>' && params.singular)) {
 
@@ -135,15 +139,22 @@ export default async function pageWizard(params) {
 		//put window in wizard mode (timeout ensures CSS transition)
 		setTimeout(() => bod.classList.add('pwz-active', 'pwz-mode-'+params.mode, 'pwz-singular-'+!!params.singular), 1);
 
-		//highlight element and unhighlight previous, if there was one
-		let hl = document.querySelectorAll('.pwz-highlighted');
-		hl.length && hl.forEach(el => el.classList.remove('pwz-highlighted'));
+		//get next element - skip to next/prev item if not found/hidden
 		let el = document.querySelector(data[next_feature_index].selector);
-		el && el.classList.add('pwz-highlighted');
-
-		//no el(s) found or hidden? Skip to next/prev item
 		if (!el || getComputedStyle(el).display == 'none' || getComputedStyle(el).visibility == 'hidden')
 			return highlight(dir == '>' ? next_feature_index++ : next_feature_index--);
+
+		//clone element and children/descendants - remove id, class and data attributes - we'll clamp in place all computed styling, so they're not needed
+		let clone = el.cloneNode(1);
+		clone.removeAttribute('id');
+		el.id && clone.setAttribute('data-orig-id', el.id);
+		clone.style.position = 'absolute';
+		clone.style.left = el.offsetLeft+'px';
+		clone.style.top = el.offsetTop+'px';
+		clone.style.width = el.offsetWidth+'px';
+		clone.style.margin = 0;
+		clone.classList.add('pwz-highlighted');
+		bod.appendChild(clone);
 
 		//float mode?...
 		delete infoArea.dataset.pos;

@@ -30,8 +30,7 @@ body:not(.pwz-singular-true) #pwz-ia > a { font-size: 1.5rem; }
 .pwz-active #pwz-ia { opacity: 1; }
 
 /* while active, blur unfocused content */
-.pwz-active * { filter: blur(4px); }
-.pwz-highlighted, .pwz-highlighted *, #pwz-ia, #pwz-ia * { filter: none; }
+.pwz-active > *:not(.pwz-highlighted):not(#pwz-ia) { filter: grayscale(50%); }
 
 /* highlighted feature */
 .pwz-active .pwz-highlighted { z-index: 10001 !important; }

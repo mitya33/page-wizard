@@ -24,9 +24,10 @@ window.pageWizard = async params => {
 
 	//prompt?
 	params.prompt && await new Promise(res => {
+		let parts = !(params.prompt instanceof Array) ? [null, params.prompt] : params.prompt;
 		!window.lblib ?
 			confirm(params.prompt) && res() :
-			lblib.confirm(params.prompt).then(r => r && res());
+			lblib.modal({title: parts[0] || 'Fancy a tour?', content: parts[1]}).then(r => r && res());
 	});
 
 	//set start point
@@ -78,7 +79,7 @@ window.pageWizard = async params => {
 	//show specific, singular slide?
 	if (params.singular) data.forEach((obj, i) => { if (obj.selector == params.singular) next_feature_index = i; });
 
-	//off we go
+	//off we go - start at page top otherwise scroll offset wonks things up
 	highlight(next_feature_index);
 
 	/* ---
@@ -86,6 +87,9 @@ window.pageWizard = async params => {
 	--- */
 
 	function highlight(index, dir) {
+
+		//revert to scroll top, otherwise clone positioning can be off - we'll shortly be scrolling to the element if we need to anyway, so this won't be noticed
+		document.documentElement.scrollTop = 0;
 
 		//unhighlight last-highlighted element, if there was one
 		let hl = document.querySelector('.pwz-highlighted');
@@ -140,18 +144,20 @@ window.pageWizard = async params => {
 		setTimeout(() => bod.classList.add('pwz-active', 'pwz-mode-'+params.mode, 'pwz-singular-'+!!params.singular), 1);
 
 		//get next element - skip to next/prev item if not found/hidden
-		let el = document.querySelector(data[next_feature_index].selector);
+		let el = data[next_feature_index] ? document.querySelector(data[next_feature_index].selector) : null;
 		if (!el || getComputedStyle(el).display == 'none' || getComputedStyle(el).visibility == 'hidden')
 			return highlight(dir == '>' ? next_feature_index++ : next_feature_index--);
 
 		//clone element and children/descendants - remove id, class and data attributes - we'll clamp in place all computed styling, so they're not needed
-		let clone = el.cloneNode(1);
+		let clone = el.cloneNode(1),
+			boundingRec = el.getBoundingClientRect();
 		clone.removeAttribute('id');
 		el.id && clone.classList.add('pwz-id-'+el.id);
 		clone.style.position = 'absolute';
-		clone.style.left = el.offsetLeft+'px';
-		clone.style.top = el.offsetTop+'px';
+		clone.style.left = boundingRec.left+'px';
+		clone.style.top = boundingRec.top+'px';
 		clone.style.width = el.offsetWidth+'px';
+		clone.style.height = el.offsetHeight+'px';
 		clone.style.margin = 0;
 		clone.classList.add('pwz-highlighted');
 		bod.appendChild(clone);
@@ -160,34 +166,34 @@ window.pageWizard = async params => {
 		delete infoArea.dataset.pos;
 		if (params.mode == 'float') {
 
-			//...position info area wherever there's most space around the target element
-			let edges = ['top', 'right', 'bottom', 'left'],
+			//...position info area wherever there's most space around the target element - unless data overrides this
+			let edges = !data[next_feature_index].position ? ['top', 'right', 'bottom', 'left'] : [data[next_feature_index].position],
 				space = edges.reduce((acc, edge) => {
 				switch (edge[0]) {
 					case 't':
 					case 'l':
-						acc[edge] = el['offset'+(edge[0] == 't' ? 'Top' : 'Left')];
+						acc[edge] = boundingRec[edge[0] == 't' ? 'top' : 'left'];
 						return acc;
 					case 'r':
 					case 'b':
 						let prop = edge[0] == 'r' ? 'Width' : 'Height';
-						acc[edge] = window['inner'+prop] - (el['offset'+(edge[0] == 'r' ? 'Left' : 'Top')] + el['offset'+prop]);
+						acc[edge] = window['inner'+prop] - (boundingRec[edge[0] == 'r' ? 'left' : 'top'] + el['offset'+prop]);
 						return acc;
 				}
 			}, {});
 			let side = Object.keys(space)[Object.values(space).indexOf(Math.max.apply(null, Object.values(space)))];
 			infoArea.dataset.pos = side;
-			edges.forEach(edge => el.style[edge] = 'auto');
+			//edges.forEach(edge => el.style[edge] = 'auto');
 			switch (side[0]) {
 				case 't':
 				case 'b':
-					infoArea.style.left = el.offsetLeft + (el.offsetWidth / 2) - (infoArea.offsetWidth / 2)+'px';
+					infoArea.style.left = boundingRec.left + (el.offsetWidth / 2) - (infoArea.offsetWidth / 2)+'px';
 					infoArea.style.top = (side[0] == 't' ? space.top - (infoArea.offsetHeight + floatBuffer) : innerHeight - (space.bottom - floatBuffer))+'px';
 					break;
 				case 'l':
 				case 'r':
 					infoArea.style.left = (side[0] == 'l' ? space.left - (infoArea.offsetWidth + floatBuffer) : innerWidth - (space.right - floatBuffer))+'px';
-					infoArea.style.top = el.offsetTop+'px';
+					infoArea.style.top = boundingRec.top+'px';
 					break;
 			}
 

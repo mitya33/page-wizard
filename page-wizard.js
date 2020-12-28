@@ -156,8 +156,8 @@ window.pageWizard = async params => {
 		clone.style.position = 'absolute';
 		clone.style.left = boundingRec.left+'px';
 		clone.style.top = boundingRec.top+'px';
-		clone.style.width = el.offsetWidth+'px';
-		clone.style.height = el.offsetHeight+'px';
+		clone.style.width = (el.offsetWidth + 1)+'px'; //allow for decimal offsets - offsetWidth may round down, which can break wrapping
+		clone.style.height = (el.offsetHeight + 1)+'px'; //ditto
 		clone.style.margin = 0;
 		clone.classList.add('pwz-highlighted');
 		bod.appendChild(clone);
